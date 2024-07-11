@@ -1,12 +1,6 @@
 import math
 import random
 
-"""
-observations = "315116246446644245311321631164152133625144543631656626566666"
-sampstates = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFLLLLLLLLLLLLLLL"
-#^ to test/compare with
-"""
-
 #function that creates a sample sequence of states/observations so I can compare
 def hmm(length):
 	states = ""
@@ -24,7 +18,7 @@ def hmm(length):
 	return states, observations
 
 
-states, observations = hmm(75)
+states, observations = hmm(200)
 print(observations)
 print(states)
 
@@ -106,4 +100,6 @@ for i in range(len(states)):
 	else:
 		check += "."
 print(check)
+accuracy = check.count(".")
+print(str((accuracy/len(states))*100)+"% accurate")
 	
