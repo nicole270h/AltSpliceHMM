@@ -1,10 +1,34 @@
 import math
+import random
 
-sampobs = "1111111611111666661"
-
-test = "315116246446644245311321631164152133625144543631656626566666"
+"""
+observations = "315116246446644245311321631164152133625144543631656626566666"
 sampstates = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFLLLLLLLLLLLLLLL"
 #^ to test/compare with
+"""
+
+#function that creates a sample sequence of states/observations so I can compare
+def hmm(length):
+	states = ""
+	observations = ""
+	val = random.choice("ffl")
+	for i in range(length):
+		states += val
+		if val == "f":
+			val = random.choice("fffffffffffffffffffl")
+			obs = random.choice("123456")
+		if val == "l":
+			val = random.choice("lllllllllf")
+			obs = random.choice("1234566666")
+		observations += obs
+	return states, observations
+
+
+states, observations = hmm(75)
+print(observations)
+print(states)
+
+
 
 
 def max2(a,b):
@@ -23,7 +47,7 @@ def a(prev, current):
 		if current == "f":
 			return 2/3 #initial probability of fair state
 		if current == "l":
-			return 1/3 #initial probability of fair state
+			return 1/3 #initial probability of loaded state
 	if prev == "f":
 		if current == "f":
 			return 0.95
@@ -46,43 +70,40 @@ def e(l, xi):
 			return 1/2
 #^ emission matrix for probability that you see xi given state l
 
-"""
-tempvit = 1
-tempval = 0
-for i in range(len(sampobs)):
-	viterbif = e("f", int(sampobs[i]))*tempvit*a(tempval, "f")
-	viterbil = e("l", int(sampobs[i]))*tempvit*a(tempval, "l")
-	tempvit = max2(viterbif, viterbil)
-	if tempvit == viterbif:
-		tempval = "f"
-	elif tempvit == viterbil:
-		tempval = "l"
-	print(i, sampobs[i], tempvit, tempval)
-"""
 
-"""
-# this is the log version because underflow
-tempvit = 1
+# in log because underflow
+sampobs = observations
+tempvitf = 0
+tempvitl = 0
 tempval = 0
+nottempval = 0
+total = []
 for i in range(len(sampobs)):
-	viterbif = math.log(e("f", int(sampobs[i])))+tempvit+math.log(a(tempval, "f"))
-	viterbil = math.log(e("l", int(sampobs[i])))+tempvit+math.log(a(tempval, "l"))
-	tempvit = max2(viterbif, viterbil)
-	if tempvit == viterbif:
+	maxkf = max2(tempvitf+math.log2(a(tempval, "f")), tempvitl+math.log2(a(nottempval, "f")))
+	maxkl = max2(tempvitf+math.log2(a(tempval, "l")), tempvitl+math.log2(a(nottempval, "l")))
+	viterbif = math.log2(e("f", int(sampobs[i])))+maxkf
+	viterbil = math.log2(e("l", int(sampobs[i])))+maxkl
+	tempvitf = viterbif
+	tempvitl = viterbil
+	if viterbif >= viterbil:
 		tempval = "f"
-	elif tempvit == viterbil:
+		nottempval = "l"
+	else:
 		tempval = "l"
-	print(i, sampobs[i], tempvit, viterbif, viterbil, tempval)
-"""
+		nottempval = "f"
+	total.append(tempval)
+	#print(i, sampobs[i], tempval)
+finalstring = "".join(total)
+print(finalstring)
 
-tempvit = 1
-tempval = 0
-for i in range(len(sampobs)):
-	viterbif = e("f", int(sampobs[i]))*tempvit*a(tempval, "f")
-	viterbil = e("l", int(sampobs[i]))*tempvit*a(tempval, "l")
-	tempvit = max2(viterbif, viterbil)
-	if tempvit == viterbif:
-		tempval = "f"
-	elif tempvit == viterbil:
-		tempval = "l"
-	print(i, sampobs[i], tempvit, viterbif, viterbil, tempval)
+
+
+#below is to see how accurately stuff matches
+check = ""
+for i in range(len(states)):
+	if finalstring[i] != states[i]:
+		check += "!"
+	else:
+		check += "."
+print(check)
+	
