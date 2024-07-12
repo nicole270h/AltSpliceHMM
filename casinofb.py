@@ -1,7 +1,7 @@
 import math
 
 
-sampobs = "661666111"
+sampobs = "661661" #sample string of observations
 
 def max2(a,b):
 	if a >= b:
@@ -59,29 +59,8 @@ def fwd():
 		fwdllist.append(fwdl)
 	return fwdflist, fwdllist
 
-"""
-def bwd():
-	prevf = 0
-	prevl = 0
-	bwdflist = []
-	bwdllist = []
-	for i in range(len(sampobs)):
-		previ = int(sampobs[-1-i])
-		subsumf1 = math.log2(a("f", "f"))+math.log2(e("f", previ))+prevf
-		subsumf2 = math.log2(a("f", "l"))+math.log2(e("l", previ))+prevl
-		bwdf = logsum(subsumf1, subsumf2)
-		subsuml1 = math.log2(a("l", "f"))+math.log2(e("f", previ))+prevf
-		subsuml2 = math.log2(a("l", "l"))+math.log2(e("l", previ))+prevl
-		bwdl = logsum(subsuml1, subsuml2)
-		prevf = bwdf
-		prevl = bwdl
-		bwdflist.append(bwdf)
-		bwdllist.append(bwdl)
-	bwdflist.reverse()
-	bwdllist.reverse()
-	return bwdflist, bwdllist
-"""
 
+#backward and in log
 def bwd():
 	prevf = 0
 	prevl = 0
@@ -109,7 +88,14 @@ def bwd():
 	return bwdflist, bwdllist
 
 
+#the forward-backward part
+forwardfair, forwardload = fwd()
+backwardfair, backwardload = bwd()
 
+for i in range(len(sampobs)):
+	print("fair: " + str(forwardfair[i] + backwardfair[i]))
+	print("loaded: " + str(forwardload[i] + backwardload[i]))
+	print("________")
 
 """
 def bwdnotlog():
@@ -135,13 +121,6 @@ def bwdnotlog():
 print(bwdnotlog())
 """
 
-forwardfair, forwardload = fwd()
-backwardfair, backwardload = bwd()
-
-for i in range(len(sampobs)):
-	print(2**(int(forwardfair[i])), 2**(int(backwardfair[i])))
-	print(2**(int(forwardload[i])), 2**(int(backwardload[i])))
-	print("________")
 
 
 """
