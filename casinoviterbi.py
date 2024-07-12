@@ -86,7 +86,6 @@ for i in range(len(sampobs)):
 		tempval = "l"
 		nottempval = "f"
 	total.append(tempval)
-	#print(i, sampobs[i], tempval)
 finalstring = "".join(total)
 print(finalstring)
 
