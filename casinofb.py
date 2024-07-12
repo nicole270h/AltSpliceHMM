@@ -1,7 +1,7 @@
 import math
 
 
-sampobs = "6611"
+sampobs = "661666111"
 
 def max2(a,b):
 	if a >= b:
@@ -59,7 +59,7 @@ def fwd():
 		fwdllist.append(fwdl)
 	return fwdflist, fwdllist
 
-
+"""
 def bwd():
 	prevf = 0
 	prevl = 0
@@ -80,11 +80,73 @@ def bwd():
 	bwdflist.reverse()
 	bwdllist.reverse()
 	return bwdflist, bwdllist
-	
+"""
+
+def bwd():
+	prevf = 0
+	prevl = 0
+	bwdflist = []
+	bwdllist = []
+	bwdf = 0
+	bwdl = 0
+	for i in range(len(sampobs)):
+		prevf = bwdf
+		prevl = bwdl
+		#print(sampobs[-1-i], bwdf, bwdl)
+		
+		previ = int(sampobs[-1-i])
+		subsumf1 = math.log2(a("f", "f"))+math.log2(e("f", previ))+prevf
+		subsumf2 = math.log2(a("f", "l"))+math.log2(e("l", previ))+prevl
+		bwdf = logsum(subsumf1, subsumf2)
+		subsuml1 = math.log2(a("l", "f"))+math.log2(e("f", previ))+prevf
+		subsuml2 = math.log2(a("l", "l"))+math.log2(e("l", previ))+prevl
+		bwdl = logsum(subsuml1, subsuml2)
+		
+		bwdflist.append(bwdf)
+		bwdllist.append(bwdl)
+	bwdflist.reverse()
+	bwdllist.reverse()
+	return bwdflist, bwdllist
+
+
+
+
+"""
+def bwdnotlog():
+	prevf = 1
+	prevl = 1
+	bwdflist = []
+	bwdllist = []
+	bwdf = 1
+	bwdl = 1
+	for i in range(len(sampobs)):
+		prevf = bwdf
+		prevl = bwdl
+		print(sampobs[-1-i], bwdf, bwdl)
+		
+		previ = int(sampobs[-1-i])
+		subsumf1 = a("f", "f")*e("f", previ)*prevf
+		subsumf2 = a("f", "l")*e("l", previ)*prevl
+		bwdf = subsumf1 + subsumf2
+		subsuml1 = a("l", "f")*e("f", previ)*prevf
+		subsuml2 = a("l", "l")*e("l", previ)*prevl
+		bwdl = subsuml1 + subsuml2
+
+print(bwdnotlog())
+"""
+
 forwardfair, forwardload = fwd()
 backwardfair, backwardload = bwd()
 
+for i in range(len(sampobs)):
+	print(2**(int(forwardfair[i])), 2**(int(backwardfair[i])))
+	print(2**(int(forwardload[i])), 2**(int(backwardload[i])))
+	print("________")
+
+
+"""
 for i in range(len(forwardfair)):
 	avgfair = 2**(logsum(forwardfair[i], backwardfair[i])-1)
 	avgload = 2**(logsum(forwardload[i], backwardload[i])-1)
 	print(avgfair, avgload)
+"""
