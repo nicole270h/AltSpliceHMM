@@ -2,9 +2,11 @@ import gzip
 import sys
 import math
 
-linecount = 0
+#run this like below:
+#python3 kmerodds.py eie.fa.gz [length of kmer]
+#replace [length of kmer] with a number 1-6 ish
 path = sys.argv[1]
-klen = 3
+klen = sys.argv[2]
 kex = {}
 kin = {}
 exoncount = 0
@@ -61,6 +63,7 @@ print("logmax: "+str(logmax)+" at "+str(logmaxdex))
 
 #v very old, counting ratio of nt that is now stored in Notes app
 """
+linecount = 0
 with gzip.open(path, 'rt') as fp:
     for line in fp:
         if line[0] == '#': continue
