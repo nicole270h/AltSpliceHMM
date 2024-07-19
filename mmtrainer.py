@@ -11,6 +11,7 @@ arg = parser.parse_args()
 # counts
 model = {}
 for defline, seq in mcb185.read_fasta(arg.file):
+	if 'N' in seq: continue
 	for i in range(len(seq) - arg.order):
 		ctx = seq[i:i+arg.order]
 		nt = seq[i+arg.order]
