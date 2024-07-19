@@ -6,7 +6,7 @@ import math
 #python3 kmerodds.py eie.fa.gz [length of kmer]
 #replace [length of kmer] with a number 1-6 ish
 path = sys.argv[1]
-klen = sys.argv[2]
+klen = int(sys.argv[2])
 kex = {}
 kin = {}
 exoncount = 0
