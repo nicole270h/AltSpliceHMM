@@ -1,6 +1,7 @@
 import argparse
 import gzip
-import readfasta
+import mcb185
+import json
 
 parser = argparse.ArgumentParser(description='Markov model trainer')
 parser.add_argument('file', help='fasta file')
@@ -9,7 +10,7 @@ arg = parser.parse_args()
 
 # counts
 model = {}
-for defline, seq in readfasta.read_record(arg.file):
+for defline, seq in mcb185.read_fasta(arg.file):
 	for i in range(len(seq) - arg.order):
 		ctx = seq[i:i+arg.order]
 		nt = seq[i+arg.order]
@@ -22,7 +23,13 @@ for ctx in model:
 	for nt in model[ctx]: model[ctx][nt] /= total
 
 # out
+#for ctx in sorted(model):
+#	for nt in sorted(model[ctx]):
+#		print(ctx, nt, model[ctx][nt])
+
+
 for ctx in sorted(model):
 	for nt in sorted(model[ctx]):
-		print(ctx, nt, model[ctx][nt])
+		out = {"ctx": ctx, "nt" : nt, "prob" : model[ctx][nt]}
+		print(out)
 
