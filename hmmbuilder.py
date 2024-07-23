@@ -1,7 +1,7 @@
 import argparse
 import gzip
 import json
-import readfasta
+import mcb185
 
 def read_fasta(filename):
 
