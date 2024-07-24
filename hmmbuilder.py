@@ -64,7 +64,7 @@ parser.add_argument('-d', '--don', type=int, default=5,
 parser.add_argument('-a', '--acc', type=int, default=6,
 	help='acceptor length [%(default)i])')
 parser.add_argument('--eet', type=float, default=0.98,
-	help='acceptor length [%(default).3f])')
+	help='exon to exon transition probability [%(default).3f])')
 arg = parser.parse_args()
 
 ## Markov model for Exon ##
