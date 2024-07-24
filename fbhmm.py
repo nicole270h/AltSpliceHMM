@@ -1,17 +1,8 @@
-import math
 import argparse
 import gzip
 import json
+import math
 import sys
-import mcb185
-
-# run with python3 fbhmm.py dm.hmm
-
-file = open(sys.argv[1])
-hmm = json.load(file)
-
-emm = hmm['states']['exon1']
-imm = hmm['states']['intron']
 
 
 def log2(a):
@@ -24,33 +15,31 @@ def logsum(logp, logq): #given log p and log q, return log(p+q)
 		logr = logp+log2(1+2**(logq-logp))
 		return logr
 
-#sample = "CACCAGTCATTCAGATTGC"
-sample = "CTTAGGCTACTTAACTGACTTCGCCGAGACAGAACGCA"
-#sample = "CTACTATTCGACATTTTCATGCGTCTCAATCTTCCGGACTgtgagtgtccctgattgaaattctcttcaattaacattgaacaattatcttactcagCTGCACCGCAACCGAATGGAGACAACGAATTGTCGCCTAA"
-#sample = sample.upper()
 
-"""
-# not in log
-def fwdhmm(sampobs):
-	fwd = {}
-	for state in hmm['states']:
-			fwd[state] = [0.0]*emm
-	fwd["exon1"] = [1.0]*emm
-	#^ created dict, every state has its own list which will have values appended to items
-	for i in range(emm, len(sampobs)): #length of sequence minus emm length, because exon2 is where it ends
-		for nextstate in fwd: #l
-			totalsum = 0
-			for nowstate in fwd: #k
-				totalsum += fwd[nowstate][i-1]*hmm['transitions'][nowstate][nextstate] #"i" is wrong here
-			#now multiply totalsum with emission prob from x = hmm['emissions'][nextstate]
-			#forwardval = hmm['emissions'][nextstate][sampobs[i]]*totalsum #something is wrong here
-			if	 nextstate == 'exon1' or nextstate == 'exon2':	window = sampobs[i-emm:i+1]
-			elif nextstate == 'intron':							window = sampobs[i-imm:i+1]
-			else:												window = sampobs[i]
-			forwardval = hmm['emissions'][nextstate][window]*totalsum
-			fwd[nextstate].append(forwardval)
-	return fwd
-"""
+def read_fasta(filename):
+	"""iteratively read records from a FASTA file"""
+	if   filename == '-':          fp = sys.stdin
+	elif filename.endswith('.gz'): fp = gzip.open(filename, 'rt')
+	else:                          fp = open(filename)
+	name = None
+	seqs = []
+	while True:
+		line = fp.readline()
+		if line == '': break
+		line = line.rstrip()
+		if line.startswith('>'):
+			if len(seqs) > 0:
+				yield(name, ''.join(seqs))
+				name = line[1:]
+				seqs = []
+			else:
+				name = line[1:]
+		else:
+			seqs.append(line)
+
+	yield(name, ''.join(seqs))
+	fp.close()
+
 
 #in log and new
 def fwdhmmlog(sampobs):
@@ -72,8 +61,7 @@ def fwdhmmlog(sampobs):
 			fwd[nextstate].append(forwardval)
 	return fwd
 
-#________________________________________________________________________
-#________________________________________________________________________
+
 def bwdemission(state, kmer):
 	total = 0
 	rest = kmer[1:]
@@ -130,7 +118,39 @@ def chart(x): #formats the fwd or bwd list so it prints legibly
 		print("")
 	return ""
 
+## CLI ##
 
+parser = argparse.ArgumentParser(description='Forward/Backward Decoder')
+parser.add_argument('hmm', help='hmm model file')
+parser.add_argument('fasta', help='fasta file')
+parser.add_argument('--local', action='store_true',
+	help='allow local initializations')
+parser.add_argument('--debug', action='store_true',
+	help='show debugging output')
+arg = parser.parse_args()
+
+# run with python3 fbhmm.py dm.hmm
+
+hmm = json.load(open(arg.hmm))
+emm = hmm['states']['exon1']
+imm = hmm['states']['intron']
+
+for defline, seq in read_fasta(arg.fasta):
+	useq = seq.upper()
+	fwd = fwdhmmlog(useq)
+	bwd = bwdhmmlog(useq)
+	cols = ['pos', 'nt', 'label']
+	cols.extend(list(fwd.keys()))
+	print('\t'.join(cols))
+	for i in range(len(seq)):
+		label = 'exon' if seq[i].isupper() else 'intron'
+		print(i, seq[i], label, sep='\t', end='')
+		for state in fwd:
+			fb = fwd[state][i] + bwd[state][i]
+			print(f'\t{fwd[state][i]:.1f}', end='')
+		print()
+
+"""
 print("", end = "\t")
 for nt in sample:
 	print(nt, end = "\t")
@@ -140,7 +160,7 @@ print("Forward:")
 print(chart(fwdhmmlog(sample)))
 print("Backward:")
 print(chart(bwdhmmlog(sample)))
-"""
+
 
 forward = fwdhmmlog(sample)
 backward = bwdhmmlog(sample)
@@ -164,4 +184,30 @@ print(chart(fb))
 
 
 
+
+#sample = "CTACTATTCGACATTTTCATGCGTCTCAATCTTCCGGACTgtgagtgtccctgattgaaattctcttcaattaacattgaacaattatcttactcagCTGCACCGCAACCGAATGGAGACAACGAATTGTCGCCTAA"
+#sample = sample.upper()
+
+"""
+# not in log
+def fwdhmm(sampobs):
+	fwd = {}
+	for state in hmm['states']:
+			fwd[state] = [0.0]*emm
+	fwd["exon1"] = [1.0]*emm
+	#^ created dict, every state has its own list which will have values appended to items
+	for i in range(emm, len(sampobs)): #length of sequence minus emm length, because exon2 is where it ends
+		for nextstate in fwd: #l
+			totalsum = 0
+			for nowstate in fwd: #k
+				totalsum += fwd[nowstate][i-1]*hmm['transitions'][nowstate][nextstate] #"i" is wrong here
+			#now multiply totalsum with emission prob from x = hmm['emissions'][nextstate]
+			#forwardval = hmm['emissions'][nextstate][sampobs[i]]*totalsum #something is wrong here
+			if	 nextstate == 'exon1' or nextstate == 'exon2':	window = sampobs[i-emm:i+1]
+			elif nextstate == 'intron':							window = sampobs[i-imm:i+1]
+			else:												window = sampobs[i]
+			forwardval = hmm['emissions'][nextstate][window]*totalsum
+			fwd[nextstate].append(forwardval)
+	return fwd
+"""
 
