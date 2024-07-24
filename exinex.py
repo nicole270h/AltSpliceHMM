@@ -23,7 +23,14 @@ for chrom in Reader(sys.argv[1], sys.argv[2]):
 			
 			efh.write(f'>{gene.id}.{tx.id}.exon{i}\n{exon1.seq_str()}\n')
 			ifh.write(f'>{gene.id}.{tx.id}.intron{i}\n{intron.seq_str()}\n')
-			eie.write(f'>{gene.id}.{tx.id}.exon{i}-exon{i+1}\n')
-			eie.write(f'{exon1.seq_str()[-40:]}\n')
-			eie.write(f'{intron.seq_str().lower()}\n')
-			eie.write(f'{exon2.seq_str()[:40]}\n')
+			
+			if exon1.strand == '+':
+				eie.write(f'>{gene.id}.{tx.id}.exon{i}-exon{i+1}\n')
+				eie.write(f'{exon1.seq_str()[-40:]}\n')
+				eie.write(f'{intron.seq_str().lower()}\n')
+				eie.write(f'{exon2.seq_str()[:40]}\n')
+			else:
+				eie.write(f'>{gene.id}.{tx.id}.exon{i+1}-exon{i}\n')
+				eie.write(f'{exon2.seq_str()[-40:]}\n')
+				eie.write(f'{intron.seq_str().lower()}\n')
+				eie.write(f'{exon1.seq_str()[:40]}\n')
