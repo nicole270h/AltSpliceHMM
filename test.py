@@ -1,6 +1,9 @@
 import gzip
 import sys
-"""
+import numpy as np
+import matplotlib.pyplot as plt
+
+
 file = sys.argv[1]
 
 def read_fasta(filename):
@@ -29,9 +32,7 @@ for name, seq in read_fasta(file):
 	print(seq)
 	print("")
 """
-
-#FBgn0003559.FBtr0306545.exon9-exon10
-yep = "CTACTATTCGACATTTTCATGCGTCTCAATCTTCCGGACTgtgagtgtccctgattgaaattctcttcaattaacattgaacaattatcttactcagCTGCACCGCAACCGAATGGAGACAACGAATTGTCGCCTAA"
-
-for l in yep:
-	print(l, end="\t")
+x = [2, 10, 6]
+x = np.array(x)
+print(x)
+"""

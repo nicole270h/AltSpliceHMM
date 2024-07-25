@@ -3,7 +3,10 @@ import gzip
 import json
 import math
 import sys
+import numpy as np
+import matplotlib.pyplot as plt
 
+#call with python3 fbhmm.py dm.hmm (fasta file)
 
 def log2(a):
 	if a != 0:
@@ -69,26 +72,6 @@ def bwdemission(state, kmer):
 		total += hmm['emissions'][state][nt+''.join(rest)]
 	ans = hmm['emissions'][state][kmer]/total
 	return ans
-"""
-def bwdhmm(sampobs):
-	bwd = {}
-	for state in hmm['states']:
-		bwd[state] = [0.0]*emm
-	bwd["exon2"] = [1.0]*emm
-	for i in range(len(sampobs)-emm-1, -1, -1): #moving backwards, so step is -1
-		for prevstate in bwd: #k
-			totalsum = 0
-			for nowstate in bwd: #l
-				if 		prevstate == 'exon1' or prevstate == 'exon2':	window = sampobs[i:i+emm+1]
-				elif 	prevstate == 'intron':						window = sampobs[i:i+imm+1]
-				else: 												window = sampobs[i]
-				eprob = bwdemission(prevstate,window)
-				totalsum += hmm['transitions'][prevstate][nowstate]*eprob*bwd[nowstate][len(sampobs)-i-2]
-			bwd[prevstate].append(totalsum)
-	for state in bwd:
-		bwd[state].reverse()
-	return bwd
-"""
 
 def bwdhmmlog(sampobs):
 	bwd = {}
@@ -139,16 +122,37 @@ for defline, seq in read_fasta(arg.fasta):
 	useq = seq.upper()
 	fwd = fwdhmmlog(useq)
 	bwd = bwdhmmlog(useq)
-	cols = ['pos', 'nt', 'label']
-	cols.extend(list(fwd.keys()))
-	print('\t'.join(cols))
+	#cols = ['pos', 'nt', 'label']
+	#cols.extend(list(fwd.keys()))
+	#print('\t'.join(cols))
+	#print("")
+	xcoord = []
+	ycoord = []
 	for i in range(len(seq)):
 		label = 'exon' if seq[i].isupper() else 'intron'
-		print(i, seq[i], label, sep='\t', end='')
+		#print(i, seq[i], label, sep='\t', end='')
+		probsum = -999
+		intronprob = fwd['intron'][i] + bwd['intron'][i]
 		for state in fwd:
 			fb = fwd[state][i] + bwd[state][i]
-			print(f'\t{fwd[state][i]:.1f}', end='')
-		print()
+			probsum = logsum(probsum, fb)
+			#print(f'\t{fb:.1f}', end='')
+		xcoord.append(i)
+		ycoord.append(intronprob-probsum)
+	xcoord = np.array(xcoord)
+	ycoord = np.array(ycoord)
+	plt.scatter(xcoord, ycoord, s=2)
+	plt.show()
+		#print(i, f'{intronprob-probsum:.5f}', sep='\t', end='')
+		#print()
+
+
+
+
+
+
+
+
 
 """
 print("", end = "\t")
@@ -171,18 +175,6 @@ for key in forward:
 		fb[key].append(forward[key][i]+backward[key][i])
 print(chart(fb))
 """
-
-
-				
-
-	
-
-
-
-
-
-
-
 
 
 #sample = "CTACTATTCGACATTTTCATGCGTCTCAATCTTCCGGACTgtgagtgtccctgattgaaattctcttcaattaacattgaacaattatcttactcagCTGCACCGCAACCGAATGGAGACAACGAATTGTCGCCTAA"
@@ -209,5 +201,24 @@ def fwdhmm(sampobs):
 			forwardval = hmm['emissions'][nextstate][window]*totalsum
 			fwd[nextstate].append(forwardval)
 	return fwd
+
+def bwdhmm(sampobs):
+	bwd = {}
+	for state in hmm['states']:
+		bwd[state] = [0.0]*emm
+	bwd["exon2"] = [1.0]*emm
+	for i in range(len(sampobs)-emm-1, -1, -1): #moving backwards, so step is -1
+		for prevstate in bwd: #k
+			totalsum = 0
+			for nowstate in bwd: #l
+				if 		prevstate == 'exon1' or prevstate == 'exon2':	window = sampobs[i:i+emm+1]
+				elif 	prevstate == 'intron':						window = sampobs[i:i+imm+1]
+				else: 												window = sampobs[i]
+				eprob = bwdemission(prevstate,window)
+				totalsum += hmm['transitions'][prevstate][nowstate]*eprob*bwd[nowstate][len(sampobs)-i-2]
+			bwd[prevstate].append(totalsum)
+	for state in bwd:
+		bwd[state].reverse()
+	return bwd
 """
 
