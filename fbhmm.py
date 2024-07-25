@@ -122,6 +122,7 @@ for defline, seq in read_fasta(arg.fasta):
 	useq = seq.upper()
 	fwd = fwdhmmlog(useq)
 	bwd = bwdhmmlog(useq)
+	print(f'>{defline}')
 	#cols = ['pos', 'nt', 'label']
 	#cols.extend(list(fwd.keys()))
 	#print('\t'.join(cols))
