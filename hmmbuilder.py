@@ -34,7 +34,7 @@ def read_mm(file, order):
 	counts = {}
 	total_len = 0
 	total_seq = 0
-	for defline, seq in read_fasta(arg.exon):
+	for defline, seq in read_fasta(file):
 		if 'N' in seq: continue
 		total_len += len(seq)
 		total_seq += 1
