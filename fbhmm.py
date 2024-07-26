@@ -6,7 +6,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-#call with python3 fbhmm.py dm.hmm (fasta file)
+#call with python3 fbhmm.py dm2.hmm (fasta file)
 
 def log2(a):
 	if a != 0:
@@ -37,6 +37,9 @@ def read_fasta(filename):
 				seqs = []
 			else:
 				name = line[1:]
+		elif 'n' in line or 'N' in line:
+			if len(seqs) > 0:
+				seqs.pop()
 		else:
 			seqs.append(line)
 
@@ -118,38 +121,80 @@ hmm = json.load(open(arg.hmm))
 emm = hmm['states']['exon1']
 imm = hmm['states']['intron']
 
+maxdiff = 0
+for defline, seq in read_fasta(arg.fasta):
+	useq = seq.upper()
+	fwd = fwdhmmlog(useq)
+	bwd = bwdhmmlog(useq)
+	xcoord = []
+	ycoord = []
+	for i in range(len(seq)):
+		probsum = -999
+		#intronprob = fwd['intron'][i] + bwd['intron'][i]
+		for state in fwd:
+			probsum = logsum(probsum, fwd[state][i] + bwd[state][i])
+		xcoord.append(i)
+		ycoord.append(2**(fwd['intron'][i] + bwd['intron'][i] - probsum)) #change here
+	xcoord = np.array(xcoord)
+	ycoord = np.array(ycoord)
+	
+	plt.ylim(-0.1, 1)
+	plt.scatter(xcoord, ycoord, s=1)
+	plt.axvspan(0,40, alpha=0.2, color='slategray')
+	plt.axvspan(len(xcoord)-40, len(xcoord), alpha=0.2, color='slategray')
+	plt.axvspan(40,45, alpha=0.1, color='lightseagreen')
+	plt.axvspan(40,55, alpha=0.1, color='lightseagreen')
+	plt.axvspan(len(xcoord)-46, len(xcoord)-40, alpha=0.1, color='lightseagreen')
+	plt.axvspan(len(xcoord)-55,len(xcoord)-40, alpha=0.1, color='lightseagreen')
+	plt.title(defline)
+	plt.show()
+	"""
+	plt.show(block = False)
+	plt.pause(0.75)
+	plt.close()
+	"""
+	
+	
+	"""
+	unique = False
+	for i in range(65, len(xcoord)-50):
+		if abs((sum(ycoord[i-10:i-5])/5)-(sum(ycoord[i-5:i])/5))>maxdiff:
+			unique = True
+			maxdiff = abs((sum(ycoord[i-10:i-5])/5)-(sum(ycoord[i-5:i])/5))
+	if unique == True:
+		bestx = xcoord
+		besty = ycoord
+		bestline = defline
+
+	
+plt.scatter(bestx, besty, s=1)
+plt.axvspan(0,40, alpha=0.2, color='slategray')
+plt.axvspan(len(bestx)-40, len(bestx), alpha=0.2, color='slategray')
+plt.axvspan(40,45, alpha=0.1, color='lightseagreen')
+plt.axvspan(40,55, alpha=0.1, color='lightseagreen')
+plt.axvspan(len(bestx)-46, len(bestx)-40, alpha=0.1, color='lightseagreen')
+plt.axvspan(len(bestx)-55,len(bestx)-40, alpha=0.1, color='lightseagreen')
+plt.title(bestline + " with diff " + str(f'{maxdiff:.3f}'))
+plt.show()
+"""
+"""
 for defline, seq in read_fasta(arg.fasta):
 	useq = seq.upper()
 	fwd = fwdhmmlog(useq)
 	bwd = bwdhmmlog(useq)
 	print(f'>{defline}')
-	#cols = ['pos', 'nt', 'label']
-	#cols.extend(list(fwd.keys()))
-	#print('\t'.join(cols))
-	#print("")
-	xcoord = []
-	ycoord = []
+	cols = ['pos', 'nt', 'label']
+	cols.extend(list(fwd.keys()))
+	print('\t'.join(cols))
+	print("")
 	for i in range(len(seq)):
 		label = 'exon' if seq[i].isupper() else 'intron'
-		#print(i, seq[i], label, sep='\t', end='')
-		probsum = -999
-		intronprob = fwd['intron'][i] + bwd['intron'][i]
+		print(i, seq[i], label, sep='\t', end='')
 		for state in fwd:
 			fb = fwd[state][i] + bwd[state][i]
-			probsum = logsum(probsum, fb)
-			#print(f'\t{fb:.1f}', end='')
-		xcoord.append(i)
-		ycoord.append(intronprob-probsum)
-	xcoord = np.array(xcoord)
-	ycoord = np.array(ycoord)
-	plt.scatter(xcoord, ycoord, s=2)
-	plt.show()
-		#print(i, f'{intronprob-probsum:.5f}', sep='\t', end='')
-		#print()
-
-
-
-
+			print(f'\t{fb:.1f}', end='')
+		print("")
+"""
 
 
 
