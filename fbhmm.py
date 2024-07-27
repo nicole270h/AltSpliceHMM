@@ -12,11 +12,12 @@ def log2(a):
 	if a != 0:
 		return math.log2(a)
 	elif a == 0:
-		return -99.0
+		return -9999.0
 
 def logsum(logp, logq): #given log p and log q, return log(p+q)
-		logr = logp+log2(1+2**(logq-logp))
-		return logr
+	if abs(logp-logq) > 30: return max(logp, logq)
+	logr = logp+log2(1+2**(logq-logp))
+	return logr
 
 
 def read_fasta(filename):
@@ -51,12 +52,12 @@ def read_fasta(filename):
 def fwdhmmlog(sampobs):
 	fwd = {}
 	for state in hmm['states']:
-			fwd[state] = [-99.0]*emm
+			fwd[state] = [-9999.0]*emm
 	fwd["exon1"] = [0.0]*emm
 	#^ created dict, every state has its own list which will have values appended to items
 	for i in range(emm, len(sampobs)): #length of sequence minus emm length, because exon2 is where it ends
 		for nextstate in fwd: #l
-			totalsum = -99
+			totalsum = -9999
 			for nowstate in fwd: #k
 				totalsum = logsum(totalsum, fwd[nowstate][i-1]+log2(hmm['transitions'][nowstate][nextstate])) #"i" is wrong here
 			#now multiply totalsum with emission prob from x = hmm['emissions'][nextstate]
@@ -79,11 +80,11 @@ def bwdemission(state, kmer):
 def bwdhmmlog(sampobs):
 	bwd = {}
 	for state in hmm['states']:
-		bwd[state] = [-99.0]*emm
+		bwd[state] = [-9999.0]*emm
 	bwd["exon2"] = [0.0]*emm
 	for i in range(len(sampobs)-emm-1, -1, -1): #moving backwards, so step is -1
 		for prevstate in bwd: #k
-			totalsum = -99
+			totalsum = -9999
 			for nowstate in bwd: #l
 				if 		prevstate == 'exon1' or prevstate == 'exon2':	window = sampobs[i:i+emm+1]
 				elif 	prevstate == 'intron':						window = sampobs[i:i+imm+1]
@@ -104,6 +105,24 @@ def chart(x): #formats the fwd or bwd list so it prints legibly
 		print("")
 	return ""
 
+def scatterplot(x, y, line, time):
+	plt.ylim(-0.05, 1.05)
+	plt.scatter(x, y, s=1)
+	plt.axvspan(0,40, alpha=0.2, color='slategray')
+	plt.axvspan(len(x)-40, len(x), alpha=0.2, color='slategray')
+	plt.axvspan(40,45, alpha=0.1, color='lightseagreen')
+	plt.axvspan(40,55, alpha=0.1, color='lightseagreen')
+	plt.axvspan(len(x)-46, len(x)-40, alpha=0.1, color='lightseagreen')
+	plt.axvspan(len(x)-55,len(x)-40, alpha=0.1, color='lightseagreen')
+	plt.title(line)
+	if time == True:
+		plt.show(block = False)
+		plt.pause(1)
+		plt.close()
+	else:
+		plt.show()
+
+
 ## CLI ##
 
 parser = argparse.ArgumentParser(description='Forward/Backward Decoder')
@@ -121,7 +140,7 @@ hmm = json.load(open(arg.hmm))
 emm = hmm['states']['exon1']
 imm = hmm['states']['intron']
 
-maxdiff = 0
+
 for defline, seq in read_fasta(arg.fasta):
 	useq = seq.upper()
 	fwd = fwdhmmlog(useq)
@@ -129,7 +148,7 @@ for defline, seq in read_fasta(arg.fasta):
 	xcoord = []
 	ycoord = []
 	for i in range(len(seq)):
-		probsum = -999
+		probsum = -9999
 		#intronprob = fwd['intron'][i] + bwd['intron'][i]
 		for state in fwd:
 			probsum = logsum(probsum, fwd[state][i] + bwd[state][i])
@@ -137,46 +156,10 @@ for defline, seq in read_fasta(arg.fasta):
 		ycoord.append(2**(fwd['intron'][i] + bwd['intron'][i] - probsum)) #change here
 	xcoord = np.array(xcoord)
 	ycoord = np.array(ycoord)
-	
-	plt.ylim(-0.1, 1)
-	plt.scatter(xcoord, ycoord, s=1)
-	plt.axvspan(0,40, alpha=0.2, color='slategray')
-	plt.axvspan(len(xcoord)-40, len(xcoord), alpha=0.2, color='slategray')
-	plt.axvspan(40,45, alpha=0.1, color='lightseagreen')
-	plt.axvspan(40,55, alpha=0.1, color='lightseagreen')
-	plt.axvspan(len(xcoord)-46, len(xcoord)-40, alpha=0.1, color='lightseagreen')
-	plt.axvspan(len(xcoord)-55,len(xcoord)-40, alpha=0.1, color='lightseagreen')
-	plt.title(defline)
-	plt.show()
-	"""
-	plt.show(block = False)
-	plt.pause(0.75)
-	plt.close()
-	"""
-	
-	
-	"""
-	unique = False
-	for i in range(65, len(xcoord)-50):
-		if abs((sum(ycoord[i-10:i-5])/5)-(sum(ycoord[i-5:i])/5))>maxdiff:
-			unique = True
-			maxdiff = abs((sum(ycoord[i-10:i-5])/5)-(sum(ycoord[i-5:i])/5))
-	if unique == True:
-		bestx = xcoord
-		besty = ycoord
-		bestline = defline
+	scatterplot(xcoord, ycoord, defline, True)
 
-	
-plt.scatter(bestx, besty, s=1)
-plt.axvspan(0,40, alpha=0.2, color='slategray')
-plt.axvspan(len(bestx)-40, len(bestx), alpha=0.2, color='slategray')
-plt.axvspan(40,45, alpha=0.1, color='lightseagreen')
-plt.axvspan(40,55, alpha=0.1, color='lightseagreen')
-plt.axvspan(len(bestx)-46, len(bestx)-40, alpha=0.1, color='lightseagreen')
-plt.axvspan(len(bestx)-55,len(bestx)-40, alpha=0.1, color='lightseagreen')
-plt.title(bestline + " with diff " + str(f'{maxdiff:.3f}'))
-plt.show()
-"""
+
+
 """
 for defline, seq in read_fasta(arg.fasta):
 	useq = seq.upper()
@@ -194,10 +177,10 @@ for defline, seq in read_fasta(arg.fasta):
 			fb = fwd[state][i] + bwd[state][i]
 			print(f'\t{fb:.1f}', end='')
 		print("")
+
+
+
 """
-
-
-
 
 
 """
