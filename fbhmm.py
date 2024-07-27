@@ -2,6 +2,7 @@ import argparse
 import gzip
 import json
 import math
+import statistics
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -94,7 +95,7 @@ def bwdhmmlog(sampobs):
 			bwd[prevstate].append(totalsum)
 	for state in bwd:
 		bwd[state].reverse()
-	return bwd		
+	return bwd
 
 
 def chart(x): #formats the fwd or bwd list so it prints legibly
@@ -128,10 +129,12 @@ def scatterplot(x, y, line, time):
 parser = argparse.ArgumentParser(description='Forward/Backward Decoder')
 parser.add_argument('hmm', help='hmm model file')
 parser.add_argument('fasta', help='fasta file')
-parser.add_argument('--local', action='store_true',
-	help='allow local initializations')
+parser.add_argument('--scatterplot', action='store_true',
+	help='make graphs')
+parser.add_argument('--textout', action='store_true',
+	help='send text to stdout')
 parser.add_argument('--debug', action='store_true',
-	help='show debugging output')
+	help='experimental')
 arg = parser.parse_args()
 
 # run with python3 fbhmm.py dm.hmm
@@ -154,9 +157,29 @@ for defline, seq in read_fasta(arg.fasta):
 			probsum = logsum(probsum, fwd[state][i] + bwd[state][i])
 		xcoord.append(i)
 		ycoord.append(2**(fwd['intron'][i] + bwd['intron'][i] - probsum)) #change here
+	if arg.debug:
+		iscores = []
+		for i in range(55, len(seq)-55):
+			fbi = fwd['intron'][i] + bwd['intron'][i]
+			fbe = max((fwd['exon1'][i] + bwd['exon1'][i], fwd['exon2'][i] + bwd['exon2'][i]))
+			iscores.append(fbi-fbe)
+		print(defline, len(seq), statistics.mean(iscores), statistics.stdev(iscores))
+		#for i in range(len(iscores)):
+		#	print(i, iscores[i])
+
+
+
+	if arg.textout:
+		for i in range(len(seq)):
+			label = 'exon' if seq[i].isupper() else 'intron'
+			print(i, seq[i], label, sep='\t', end='')
+			for state in fwd:
+				fb = fwd[state][i] + bwd[state][i]
+				print(f'\t{fb:.1f}', end='')
+			print("")
 	xcoord = np.array(xcoord)
 	ycoord = np.array(ycoord)
-	scatterplot(xcoord, ycoord, defline, True)
+	if arg.scatterplot: scatterplot(xcoord, ycoord, defline, True)
 
 
 
