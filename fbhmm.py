@@ -179,7 +179,7 @@ for defline, seq in read_fasta(arg.fasta):
 			print("")
 	xcoord = np.array(xcoord)
 	ycoord = np.array(ycoord)
-	if arg.scatterplot: scatterplot(xcoord, ycoord, defline, True)
+	if arg.scatterplot: scatterplot(xcoord, ycoord, defline, False)
 
 
 
